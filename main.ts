@@ -13,7 +13,7 @@
 // Outside the grader, MAKEFUN_OUTPUT_DIR stands in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildDossier } from "./vendor/makefun-frontend.ts";
@@ -22,9 +22,16 @@ const repoRoot = fileURLToPath(new URL(".", import.meta.url));
 const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
 
 // Start from a clean output directory so a re-run can never leave stale
-// files behind (and so two runs write byte-identical output).
-rmSync(outDir, { recursive: true, force: true });
+// files behind (and so two runs write byte-identical output). Only the
+// directory's CONTENTS are removed, never the directory itself: in the
+// grader /output is a mount point whose parent is read-only, so removing
+// the directory itself fails with EACCES and the run exits 1 (this entry's
+// round-1 rejection, 26 Nov 2026). The grader hands us an empty /output,
+// so clearing the contents is a no-op there.
 mkdirSync(outDir, { recursive: true });
+for (const entry of readdirSync(outDir)) {
+  rmSync(join(outDir, entry), { recursive: true, force: true });
+}
 
 const appDir = join(repoRoot, "app");
 const shotsDir = join(repoRoot, "screenshots");
