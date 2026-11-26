@@ -38,11 +38,15 @@ if (existsSync(shotsDir)) {
 
 // The gate's caps, as the starter documents them: the dossier text is
 // capped at 160 KiB; at most 4 screenshots of 256 KiB each; app/ holds at
-// most 993 files and directories and 16 MiB in all.
-const dossier = buildDossier(outDir, {
+// most 993 files and directories and 16 MiB in all. Kept in one named
+// object so the limits are visible in one place and easy to audit against
+// the starter's documented values.
+const dossierCaps = {
   text_max_bytes: 163840,
   screenshots: { max: 4, max_bytes: 262144 },
   app_max_files: 993,
   app_max_bytes: 16777216,
-});
+};
+
+const dossier = buildDossier(outDir, dossierCaps);
 writeFileSync(join(outDir, "dossier.json"), dossier);
